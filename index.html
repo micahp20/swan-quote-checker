@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swan Quote Checker</title>
+<meta name="description" content="Compare three HVAC quotes, review installation details, and find questions to ask before you sign.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: one simple column. Upload first, answers second, comparison last. Large type for older readers. */
+  --ink:#10253a; --paper:#f3f5f7; --card:#ffffff; --line:#d5dce3; --muted:#4f6070;
+  --accent:#0a6a96; --accent-soft:#e3f1f8;
+  --good:#1d7a46; --good-soft:#e2f3e8; --warn:#8f5400; --warn-soft:#fdf0d8; --bad:#b3261e; --bad-soft:#fbe4e2;
+  --display:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Barlow',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+@media(max-width:480px){header h1{font-size:30px}.hero h2{font-size:32px}.panel{padding:12px}.box{padding:12px}.seg{display:flex}.seg button{flex:1;padding:8px 10px}.tab{flex:1;min-width:0;padding:12px 8px}.cards{grid-template-columns:1fr}}
+@media print{header,.hero,.how3,#start,#tabs,#panel,#exnote,#chips,#copyBtn,footer,.step .n{display:none!important}.wrap{max-width:none}.tablewrap{overflow:visible}table{min-width:0}th,td{font-size:11px;padding:6px}.cards{display:block}.card{break-inside:avoid}body{font-size:12px;background:white}}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:400 18px/1.55 var(--body);padding:0 0 56px}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+header{background:var(--ink);color:#fff;padding:22px 0 20px}
+header h1{font:700 36px/1.05 var(--display);letter-spacing:.01em;margin:0 0 6px;text-transform:uppercase;text-wrap:balance}
+header p{margin:0;color:#d3dfea;max-width:60ch}
+.disclose{margin-top:14px;font-size:15px;background:rgba(255,255,255,.1);border-left:3px solid #6cc4ea;padding:8px 12px;max-width:66ch}
+h2{font:700 27px/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em;margin:0;text-wrap:balance}
+.step{display:flex;gap:10px;align-items:baseline;margin:34px 0 8px}
+.step .n{font:700 17px var(--display);background:var(--accent);color:#fff;border-radius:3px;padding:1px 9px}
+.sub{color:var(--muted);margin:0 0 14px;font-size:17px;max-width:62ch}
+.notice{background:var(--warn-soft);color:#5e3a00;border:1px solid #ecd29b;padding:10px 14px;border-radius:6px;font-size:16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+.tabs{display:flex;gap:6px;margin:10px 0 0;flex-wrap:wrap}
+.tab{font:600 17px var(--body);padding:12px 18px;border:1px solid var(--line);border-bottom:none;background:#e6ebf0;color:var(--muted);border-radius:6px 6px 0 0;cursor:pointer;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:inset 0 4px 0 var(--accent)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:0 6px 6px 6px;padding:18px}
+.box{border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
+.box h3{font:700 22px var(--display);text-transform:uppercase;letter-spacing:.03em;margin:0 0 10px}
+.box h3 span{color:var(--accent)}
+input[type=text],input[type=url],input[type=number],select,textarea{font:400 18px var(--body);color:var(--ink);background:#fff;border:1px solid #9fb0bf;border-radius:6px;padding:11px 12px;width:100%}
+textarea{min-height:100px;resize:vertical}
+:focus-visible,.upload:focus-within{outline:3px solid #6cc4ea;outline-offset:2px}
+.btn{font:600 18px var(--body);background:var(--accent);color:#fff;border:0;border-radius:6px;padding:12px 20px;cursor:pointer;min-height:48px}
+.btn.ghost{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.btn:disabled{opacity:.55;cursor:wait}
+.upload{display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;border:2px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:22px 14px;font:700 22px var(--display);text-transform:uppercase;letter-spacing:.03em;cursor:pointer}
+.upload.small{padding:12px;font-size:17px;justify-content:flex-start;text-align:left}
+.upload input{position:absolute;opacity:0;width:1px;height:1px}
+.or{margin:12px 0 6px;color:var(--muted);font-weight:600;font-size:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row > input{flex:1;min-width:200px}
+.status{font-size:16px;color:var(--muted);margin-top:8px;min-height:1.4em}
+.status.err{color:var(--bad)} .status.ok{color:var(--good)}
+.found{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 18px;margin:0}
+.found div{border-bottom:1px solid var(--line);padding-bottom:6px}
+.found dt{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.found dd{margin:0;font-weight:600;font-size:19px;overflow-wrap:anywhere}
+.empty{color:var(--muted);margin:0}
+details.fix{margin-top:12px}
+details.fix summary,details.why summary,details.alt summary{cursor:pointer;color:var(--accent);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:12px}
+.grid .wide{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.check{padding:16px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:0;padding-bottom:0}
+.check .q{font-weight:600;margin-bottom:10px;font-size:19px}
+.seg{display:inline-flex;border:2px solid #7f93a5;border-radius:6px;overflow:hidden}
+.seg button{font:600 18px var(--body);min-height:48px;padding:8px 22px;border:0;border-right:2px solid #7f93a5;background:#fff;color:var(--ink);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"][data-v="yes"]{background:var(--good);color:#fff}
+.seg button[aria-pressed="true"][data-v="no"]{background:var(--bad);color:#fff}
+.seg button[aria-pressed="true"][data-v="unsure"]{background:var(--warn);color:#fff}
+details.why{margin-top:10px;font-size:17px;color:var(--muted)}
+details.why p{margin:6px 0 0;max-width:66ch}
+.docup{margin-top:12px;padding:12px;background:#f7f9fb;border:1px solid var(--line);border-radius:6px}
+.docup p{margin:0 0 8px;font-size:16px;color:var(--muted)}
+.docres{margin-top:8px;font-size:16px}
+.docres b{font-weight:600}
+.bg dl{margin:0}
+.tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:620px;font-variant-numeric:tabular-nums}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:17px}
+thead th{font:700 19px var(--display);text-transform:uppercase;letter-spacing:.03em;background:#eef2f5}
+tbody th{font-weight:600;color:var(--muted);width:30%;background:#fafbfc;position:sticky;left:0;z-index:1}
+tr.grp th{background:var(--ink);color:#fff;font:700 15px var(--display);text-transform:uppercase;letter-spacing:.06em;position:static}
+tr.score td{background:#f1f6fa}
+.pill{display:inline-block;font-size:13px;font-weight:700;padding:1px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;margin-left:6px;vertical-align:1px}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.info{background:var(--accent-soft);color:var(--accent)}
+.yes{color:var(--good);font-weight:700} .no{color:var(--bad);font-weight:700} .ask{color:var(--warn);font-weight:700} .flag{color:var(--bad);font-weight:600}
+.big{font:700 34px/1 var(--display)}
+.bar{height:9px;background:#dde4ea;border-radius:99px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px}
+.card h4{font:700 21px var(--display);text-transform:uppercase;margin:0 0 8px}
+.card ul{margin:0;padding-left:20px;font-size:17px}
+.card li{margin:6px 0}
+.how table{min-width:0}
+.how td:last-child,.how th:last-child{text-align:right;width:80px}
+.small-note{font-size:15px;color:var(--muted);margin:8px 0 0}
+footer{margin-top:36px;font-size:15px;color:var(--muted);max-width:72ch}
+.hero{background:var(--accent-soft);border-bottom:1px solid #b9dbec;padding:28px 0 26px}
+.hero h2{font:700 38px/1.05 var(--display);text-transform:uppercase;margin:0 0 8px}
+.hero p{margin:0 0 16px;max-width:58ch;color:var(--ink)}
+.how3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:22px}
+.how3 .card h4{color:var(--accent)}
+.how3 .card p{margin:0;font-size:17px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{font:600 16px var(--body);min-height:44px;padding:8px 14px;border:2px solid var(--accent);border-radius:99px;background:#fff;color:var(--accent);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);color:#fff}
+.remind{margin-top:14px;background:var(--accent-soft);border:1px solid #b9dbec;border-radius:6px;padding:12px 16px;font-size:17px}
+.remind b{display:block;margin-bottom:4px}
+.remind ul{margin:0;padding-left:20px}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Swan Quote Checker</h1>
+    <div class="disclose">A free tool created by a Comfort Advisor at Swan Plumbing, Heating &amp; Air Conditioning. Every quote is scored on the same checklist, Swan's included.</div>
+  </div>
+</header>
+<section class="hero"><div class="wrap">
+  <h2>Three HVAC quotes. One clear comparison.</h2>
+  <p>Clarity before you commit. Upload each quote, answer a few simple questions, and see what is included and what is missing.</p>
+  <div class="row"><button class="btn" id="goStart" type="button">Start your comparison</button><button class="btn ghost" id="goSample" type="button">Explore a sample</button></div>
+</div></section>
+<section class="wrap how3" aria-label="How it works">
+  <div class="card"><h4>Bring your quotes</h4><p>Upload each quote as a PDF or photo. Text and photo reading happens in your browser. Review the extracted details.</p></div>
+  <div class="card"><h4>Find the differences</h4><p>Every contractor gets the same questions, so the gaps stand out.</p></div>
+  <div class="card"><h4>Close the gaps</h4><p>Anything missing becomes a question to ask before you sign.</p></div>
+</section>
+
+<main class="wrap">
+  <div class="step" id="start"><span class="n">1</span><h2>Add your quotes</h2></div>
+  <p class="sub">Use one tab for each contractor. Upload a PDF or photo, paste text, or enter the details yourself. Check all extracted details before comparing.</p>
+  <div id="exnote" class="notice" hidden><span>These are example quotes so you can see how it works.</span><button class="btn ghost" id="clearEx" type="button">Start with my own</button></div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="panel" id="panel"></div>
+
+  <div class="step" id="sample"><span class="n">2</span><h2>Side by side</h2></div>
+  <p class="sub">On a phone, swipe the table sideways. The score shows how complete a quote is. It does not look at price.</p>
+  <div class="chips" id="chips" role="group" aria-label="Show topic"></div>
+  <div class="tablewrap"><table id="cmp"></table></div>
+  <div class="remind"><b>Before you decide</b><ul>
+    <li>Prices are before any rebates or tax credits. Check what you qualify for.</li>
+    <li>Get financing terms in writing: rate, length and fees.</li>
+    <li>System size should come from a load calculation, not a rule of thumb.</li></ul></div>
+  <div class="row" style="margin-top:14px"><button class="btn ghost" id="copyBtn" type="button">Copy summary</button><span class="status" id="copyStatus" role="status"></span></div>
+  <textarea id="sumBox" readonly hidden aria-label="Summary text" style="margin-top:10px;min-height:180px"></textarea>
+
+  <div class="step"><span class="n">3</span><h2>Ask before you sign</h2></div>
+  <p class="sub">These are the things worth asking each contractor about.</p>
+  <div class="cards" id="asks"></div>
+
+  <div class="step"><span class="n">4</span><h2>How the score works</h2></div>
+  <div class="tablewrap how"><table id="how"></table></div>
+
+  <footer>
+    <p>This page does not save your quotes. PDF text and photo reading run in your browser; quote contents are not sent to an AI service. Reading tools and fonts download from third-party CDNs. Refreshing the page clears your comparison. Rebate, financing and sizing details still need to be confirmed with each contractor.</p>
+    <p>Swan Quote Checker is a free tool from Swan Plumbing, Heating &amp; Air Conditioning. Swan's own quotes are scored with the same checklist and the same points as every other contractor.</p>
+    <p>Our reading of a quote can be wrong, so check what we found. This tool gives general guidance. It does not replace an in-person load calculation or a licensed contractor's inspection.</p>
+  </footer>
+</main>
+
+<script>
+const CHECKS=[
+ {id:'load',pts:20,doc:'load',q:'Did the contractor do a heat load calculation (Manual J) for your home?',why:'A load calculation measures how much heating and cooling your house needs, using square footage, insulation, windows and which way the house faces. Without one, the system size is a guess. A system that is too big turns on and off too often, wears out sooner and leaves the air damp. One that is too small never keeps up.'},
+ {id:'duct',pts:15,doc:'duct',q:'Did they check your ductwork and airflow?',why:'Your ducts have to carry the air the new system moves. Small or leaky ducts can cut a high-efficiency system down to average performance and make it noisy. Ask for an airflow or static pressure reading in writing.'},
+ {id:'model',pts:10,q:'Does the quote list the exact brand and model numbers?',why:'"3-ton high-efficiency system" can mean very different equipment. Model numbers let you look up the real efficiency, stages and warranty, and confirm you get what you paid for.'},
+ {id:'permit',pts:10,q:'Is the city permit included in the price?',why:'A permit brings a city inspector to check the install. A contractor who skips the permit saves money and leaves you with work nobody has verified. It can also cause problems when you sell the house.'},
+ {id:'lic',pts:10,q:'Did you check their license and insurance?',why:'Ask for proof of license and liability insurance, then check the license with the state or city. If an uninsured crew damages your home, you are the one who pays.'},
+ {id:'fin',pts:5,q:'Did they offer financing options?',why:'Replacing a system is a big expense. A contractor who offers several financing options, including low or zero interest, makes it easier to pick the right equipment instead of the cheapest.'},
+ {id:'labor',pts:5,q:'Does the quote include a labor warranty of 2 years or more?',why:'Manufacturer warranties usually cover parts only. Labor to replace a failed part can cost hundreds of dollars. A labor warranty from the contractor covers that.'},
+ {id:'pressure',pts:5,q:'Is the price good without having to sign today?',why:'Prices that expire tonight are a sales tactic. A fair quote still holds after you have had time to compare it with the others.'}
+];
+const REP=[{id:'rep',pts:10,label:'Google rating 4.5+ with 100+ reviews'},{id:'yrs',pts:5,label:'10+ years in business'}];
+const blank=()=>({name:'',price:'',brand:'',model:'',tons:'',seer:'',stage:'',parts:'',labor:'',rating:'',reviews:'',years:'',permits:'',answers:{},docs:{},paste:'',link:'',status:'',statusType:'',example:false});
+const ex=(o,a,d)=>Object.assign(blank(),o,{answers:a,docs:d||{},example:true});
+const EXAMPLES=[
+ ex({name:'Example Contractor A',price:11800,brand:'Brand X',model:'XA-36',tons:3,seer:14.3,stage:'single',parts:5,labor:1,rating:4.1,reviews:38,years:4,permits:12},{load:'no',duct:'no',model:'yes',permit:'no',lic:'yes',fin:'no',labor:'no',pressure:'no'}),
+ ex({name:'Example Contractor B',price:14900,brand:'Brand Y',model:'YB-36V',tons:3,seer:18,stage:'variable',parts:10,labor:5,rating:4.8,reviews:412,years:17,permits:640},{load:'yes',duct:'yes',model:'yes',permit:'yes',lic:'yes',fin:'yes',labor:'yes',pressure:'yes'},{load:{name:'load-calc.pdf',tons:2.8},duct:{name:'airflow-report.pdf',static:0.55}}),
+ ex({name:'Example Contractor C',price:13200,brand:'Brand Z',model:'',tons:4,seer:16,stage:'two',parts:10,labor:2,rating:4.6,reviews:121,years:9,permits:95},{load:'yes',duct:'yes',model:'no',permit:'yes',lic:'unsure',fin:'yes',labor:'yes',pressure:'no'},{load:{name:'load-calc.pdf',tons:2.8},duct:{name:'duct-check.pdf',static:0.95}})
+];
+let Q=[blank(),blank(),blank()];
+let cur=0;
+const BUSY=new WeakSet();
+const FILES=[null,null,null];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const letter=i=>'ABC'[i];
+const nm=i=>Q[i].name.trim()||('Quote '+letter(i));
+const money=v=>(v===''||isNaN(+v))?'—':'$'+(+v).toLocaleString('en-US');
+const val=v=>(v===''||v==null)?'—':esc(v);
+const STAGES={single:'Single-stage',two:'Two-stage',variable:'Variable-speed'};
+const bgKnown=q=>q.rating!==''&&q.reviews!=='';
+
+/* Flags from uploaded documents */
+function flags(q){
+  const f=[];
+  const t=parseFloat(q.tons),d=q.docs.load&&parseFloat(q.docs.load.tons);
+  if(t>0&&d>0){
+    if(t/d>1.25)f.push(`Quote is ${t} tons, but the load calculation suggests about ${d}. The system may be oversized.`);
+    else if(t/d<0.9)f.push(`Quote is ${t} tons, but the load calculation suggests about ${d}. The system may be undersized.`);
+  }
+  const s=q.docs.duct&&parseFloat(q.docs.duct.static);
+  if(s>0.8)f.push(`Duct static pressure of ${s} in. WC is on the high side (most home systems are built for about 0.5). Ask whether the ducts need work.`);
+  return f;
+}
+
+function score(q){
+  let got=0,denom=0,open=[];
+  CHECKS.forEach(c=>{denom+=c.pts;const a=q.answers[c.id];if(a==='yes')got+=c.pts;else open.push({text:c.q,state:a==='no'?'no':'ask'});});
+  if(bgKnown(q)){
+    denom+=10;const r=parseFloat(q.rating),n=parseInt(q.reviews,10);
+    if(r>=4.5&&n>=100)got+=10;else open.push({text:'Their Google rating or review count is below the 4.5 stars and 100 reviews we look for.',state:'no'});
+  }
+  if(q.years!==''){
+    denom+=5;
+    if(parseInt(q.years,10)>=10)got+=5;else open.push({text:'They have been in business under 10 years. Ask about their track record.',state:'no'});
+  }
+  flags(q).forEach(t=>open.push({text:t,state:'no'}));
+  return {got,denom,pct:Math.round(got/denom*100),open,bg:bgKnown(q)&&q.years!==''};
+}
+
+function renderTabs(){
+  $('#tabs').innerHTML=Q.map((q,i)=>`<button type="button" class="tab" role="tab" aria-selected="${i===cur}" data-i="${i}">${esc(nm(i))}</button>`).join('');
+  $('#tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{cur=+b.dataset.i;renderTabs();renderPanel();});
+}
+
+function foundHTML(q){
+  const has=q.price!==''||q.brand||q.model||q.name||q.tons!==''||q.seer!=='';
+  if(!has)return '<p class="empty">Nothing yet. Upload your quote above and we will fill this in.</p>';
+  const eq=[q.brand,q.model].filter(Boolean).join(' ');
+  return `<dl class="found">
+    <div><dt>Contractor</dt><dd>${val(q.name)}</dd></div>
+    <div><dt>Total price</dt><dd>${money(q.price)}</dd></div>
+    <div><dt>Equipment</dt><dd>${val(eq)}</dd></div>
+    <div><dt>Size</dt><dd>${q.tons===''?'—':esc(q.tons)+' ton'}</dd></div>
+    <div><dt>Efficiency (SEER2)</dt><dd>${val(q.seer)}</dd></div>
+    <div><dt>Stages</dt><dd>${q.stage?STAGES[q.stage]:'—'}</dd></div>
+    <div><dt>Parts warranty</dt><dd>${q.parts===''?'—':esc(q.parts)+' years'}</dd></div>
+    <div><dt>Labor warranty</dt><dd>${q.labor===''?'—':esc(q.labor)+' years'}</dd></div>
+  </dl>`;
+}
+function fld(k,label,type,extra){return `<label class="f">${label}<input type="${type||'text'}" data-k="${k}" value="${esc(Q[cur][k])}" ${extra||''}></label>`;}
+
+function docHTML(q,kind){
+  const d=q.docs[kind];
+  if(!d)return '';
+  if(kind==='load'){
+    return `<div class="docres" id="res-load"><b>${esc(d.name)}</b>${d.tons?`: the load calculation suggests about <b>${esc(d.tons)} tons</b>.`:' uploaded.'}</div>`;
+  }
+  return `<div class="docres" id="res-duct"><b>${esc(d.name)}</b>${d.static?`: static pressure <b>${esc(d.static)} in. WC</b>.`:' uploaded.'}</div>`;
+}
+
+function bgHTML(q){
+  const known=bgKnown(q);
+  return `<dl class="found">
+    <div><dt>Google rating</dt><dd>${q.rating===''?'Not entered':esc(q.rating)+' ★'}</dd></div>
+    <div><dt>Google reviews</dt><dd>${q.reviews===''?'Not entered':esc(q.reviews)}</dd></div>
+    <div><dt>Years in business</dt><dd>${q.years===''?'Not entered':esc(q.years)}</dd></div>
+    <div><dt>Permits pulled</dt><dd>${q.permits===''?'Not entered':esc(q.permits)}</dd></div>
+  </dl>
+  <p class="small-note">${known?'These figures were entered by you or supplied in the example. Verify them with the original source.':'Enter verified company details below. Automatic company lookups are not connected.'}</p>
+  <details class="alt fix"><summary>Enter or update company details</summary>
+    <div class="grid">${fld('rating','Google rating','number','min="0" max="5" step="0.1"')}${fld('reviews','Google reviews','number','min="0"')}${fld('years','Years in business','number','min="0"')}${fld('permits','Permits pulled','number','min="0"')}</div>
+  </details>`;
+}
+
+function renderPanel(){
+  const q=Q[cur];
+  $('#panel').innerHTML=`
+  <div class="box">
+    <h3><span>A.</span> Upload your quote</h3>
+    <label class="upload" id="upLabel"><input type="file" id="file" accept="image/*,application/pdf" aria-label="Upload your quote as a PDF or photo"><span>Upload the quote (PDF or photo)</span></label>
+    <p class="small-note">Have a quote link? Open it and download the PDF, then upload it here.</p>
+    <details class="alt fix"><summary>Or paste the text of the quote</summary>
+      <textarea id="paste" placeholder="Paste the quote here" aria-label="Quote text">${esc(q.paste)}</textarea>
+      <div style="margin-top:10px"><button class="btn" type="button" id="pasteBtn">Read pasted text</button></div>
+    </details>
+    <div class="status ${q.statusType}" id="aiStatus" role="status">${esc(q.status)}</div>
+  </div>
+
+  <div class="box">
+    <h3><span>B.</span> What we found</h3>
+    <div id="foundBox">${foundHTML(q)}</div>
+    <details class="fix"><summary>Something wrong? Fix it here</summary>
+      <div class="grid">
+        <div class="wide">${fld('name','Contractor name')}</div>
+        ${fld('price','Total price ($)','number','min="0" inputmode="decimal"')}
+        ${fld('brand','Brand')}
+        ${fld('model','Model number(s)')}
+        ${fld('tons','Size (tons)','number','min="0" step="0.5" inputmode="decimal"')}
+        ${fld('seer','Efficiency (SEER2)','number','min="0" step="0.1" inputmode="decimal"')}
+        <label class="f">Stages<select data-k="stage"><option value="">Select</option>${Object.keys(STAGES).map(k=>`<option value="${k}" ${q.stage===k?'selected':''}>${STAGES[k]}</option>`).join('')}</select></label>
+        ${fld('parts','Parts warranty (years)','number','min="0"')}
+        ${fld('labor','Labor warranty (years)','number','min="0"')}
+      </div>
+    </details>
+  </div>
+
+  <div class="box">
+    <h3><span>C.</span> A few questions</h3>
+    ${CHECKS.map(c=>`<div class="check" data-c="${c.id}">
+      <div class="q">${esc(c.q)}</div>
+      <div class="seg" role="group" aria-label="${esc(c.q)}">
+        ${['yes','no','unsure'].map(v=>`<button type="button" data-v="${v}" aria-pressed="${q.answers[c.id]===v}">${v==='unsure'?'Not sure':v[0].toUpperCase()+v.slice(1)}</button>`).join('')}
+      </div>
+      ${c.doc?`<div class="docup"><p>${c.doc==='load'?'Do you have the load calculation? Upload it and we will check the system size against it.':'Do you have the duct or airflow report? Upload it and we will check it.'}</p>
+        <label class="upload small"><input type="file" data-doc="${c.doc}" accept="image/*,application/pdf" aria-label="Upload ${c.doc==='load'?'load calculation':'duct and airflow report'}"><span>Upload (optional)</span></label>
+        <div id="docout-${c.doc}">${docHTML(q,c.doc)}</div></div>`:''}
+      <details class="why"><summary>Why this matters</summary><p>${esc(c.why)}</p></details>
+    </div>`).join('')}
+  </div>
+
+  <div class="box bg">
+    <h3><span>D.</span> About this company</h3>
+    ${bgHTML(q)}
+  </div>`;
+
+  const p=$('#panel');
+  p.querySelectorAll('[data-k]').forEach(el=>{
+    const h=()=>{Q[cur][el.dataset.k]=el.value;Q[cur].example=false;if(el.dataset.k==='name')renderTabs();$('#foundBox').innerHTML=foundHTML(Q[cur]);renderCompare();$('#exnote').hidden=!Q.some(x=>x.example);};
+    el.addEventListener('input',h);el.addEventListener('change',h);
+  });
+  p.querySelectorAll('.check').forEach(row=>{
+    row.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+      Q[cur].answers[row.dataset.c]=b.dataset.v;Q[cur].example=false;
+      row.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+      renderCompare();$('#exnote').hidden=!Q.some(x=>x.example);
+    });
+  });
+  $('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;FILES[cur]=f;$('#upLabel span').textContent='Selected: '+f.name;readQuote();};
+  $('#paste').addEventListener('input',e=>{Q[cur].paste=e.target.value;});
+  $('#pasteBtn').onclick=()=>readQuote(true);
+  p.querySelectorAll('[data-doc]').forEach(inp=>inp.onchange=e=>{const f=e.target.files[0];if(f)readDoc(inp.dataset.doc,f);});
+}
+function setStatus(t,type){const q=Q[cur];q.status=t;q.statusType=type||'';const el=$('#aiStatus');if(el){el.textContent=t;el.className='status '+(type||'');}}
+
+function bestIdx(fn,dir){
+  let b=-1,bv=null;
+  Q.forEach((q,i)=>{const v=fn(q);if(v===''||v==null||isNaN(+v))return;const n=+v;if(bv==null||(dir<0?n<bv:n>bv)){bv=n;b=i;}});
+  const ties=Q.filter(q=>{const v=fn(q);return v!==''&&v!=null&&+v===bv}).length;
+  return ties>1?-1:b;
+}
+function ans(a){return a==='yes'?'<span class="yes">Yes</span>':a==='no'?'<span class="no">No</span>':'<span class="ask">'+(a==='unsure'?'Not sure':'Not stated')+'</span>';}
+const TOPICS=[['all','All'],['cost','True cost'],['equip','Equipment and efficiency'],['install','Installation scope'],['warr','Warranty and service'],['co','The company']];
+let topic='all';
+function renderCompare(){
+  const S=Q.map(score);
+  const bp=bestIdx(q=>q.price,-1),bs=bestIdx(q=>q.seer,1);
+  const R=[];
+  const add=(t,label,fn)=>R.push({t,label,fn});
+  const chk=(t,id)=>{const c=CHECKS.find(x=>x.id===id);add(t,esc(c.q),q=>ans(q.answers[id]));};
+  const look=v=>v===''?'<span class="ask">Not entered</span>':null;
+  add('cost','Installed price (before rebates and tax credits)',(q,i)=>money(q.price)+(bp===i?'<span class="pill info">Lowest</span>':''));
+  chk('cost','fin');chk('cost','pressure');
+  add('equip','Equipment',q=>val([q.brand,q.model].filter(Boolean).join(' ')));
+  add('equip','Size',q=>q.tons===''?'\u2014':esc(q.tons)+' ton');
+  add('equip','Efficiency (SEER2)',(q,i)=>val(q.seer)+(bs===i?'<span class="pill info">Highest</span>':''));
+  add('equip','Stages',q=>q.stage?STAGES[q.stage]:'\u2014');
+  chk('equip','model');
+  add('equip','Size matches your load calculation',q=>{const t=parseFloat(q.tons),d=q.docs.load&&parseFloat(q.docs.load.tons);if(!(t>0&&d>0))return '<span class="ask">Not stated</span>';const r=t/d;return r>1.25?`<span class="no">Looks oversized</span> <span style="color:var(--muted)">(${t} vs ${d})</span>`:r<0.9?`<span class="no">Looks undersized</span> <span style="color:var(--muted)">(${t} vs ${d})</span>`:`<span class="yes">Within comparison range</span> <span style="color:var(--muted)">(${t} vs ${d})</span>`;});
+  chk('install','load');chk('install','duct');
+  add('install','Duct pressure',q=>{const s=q.docs.duct&&parseFloat(q.docs.duct.static);if(!(s>0))return '<span class="ask">Not stated</span>';return s>0.8?`<span class="no">High</span> <span style="color:var(--muted)">(${s} in. WC)</span>`:`<span class="ask">Check equipment rating</span> <span style="color:var(--muted)">(${s} in. WC)</span>`;});
+  chk('install','permit');chk('install','lic');
+  add('warr','Parts warranty',q=>q.parts===''?'\u2014':esc(q.parts)+' yr');
+  add('warr','Labor warranty',q=>q.labor===''?'\u2014':esc(q.labor)+' yr');
+  chk('warr','labor');
+  add('co','Google rating',q=>look(q.rating)||esc(q.rating)+' \u2605');
+  add('co','Google reviews',q=>look(q.reviews)||esc(q.reviews));
+  add('co','Years in business',q=>look(q.years)||esc(q.years));
+  add('co','Permits pulled',q=>look(q.permits)||esc(q.permits));
+  const row=r=>`<tr><th scope="row">${r.label}</th>${Q.map((q,i)=>`<td>${r.fn(q,i)}</td>`).join('')}</tr>`;
+  const grp=t=>`<tr class="grp"><th colspan="${Q.length+1}">${t}</th></tr>`;
+  let body='';
+  if(topic==='all'){TOPICS.slice(1).forEach(([k,n])=>{body+=grp(n)+R.filter(r=>r.t===k).map(row).join('');});}
+  else body=R.filter(r=>r.t===topic).map(row).join('');
+  $('#cmp').innerHTML=`<thead><tr><th scope="col">Compare</th>${Q.map((q,i)=>`<th scope="col">${esc(nm(i))}</th>`).join('')}</tr></thead><tbody>
+  ${body}
+  ${grp('Checklist score')}
+  <tr class="score"><th scope="row">Checklist completeness score</th>${S.map(s=>{
+    const band=s.pct>=80?['Strong','good']:s.pct>=50?['Gaps','warn']:['Major gaps','bad'];
+    return `<td><span class="big">${s.pct}</span><span style="color:var(--muted)"> / 100</span><span class="pill ${band[1]}">${band[0]}</span><div class="bar"><i style="width:${s.pct}%"></i></div>${s.bg?'':'<div class="small-note">Company background not included yet</div>'}</td>`;}).join('')}</tr>
+  </tbody>`;
+  $('#chips').innerHTML=TOPICS.map(([k,n])=>`<button type="button" class="chip" data-t="${k}" aria-pressed="${topic===k}">${n}</button>`).join('');
+  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{topic=b.dataset.t;renderCompare();});
+  $('#asks').innerHTML=Q.map((q,i)=>{
+    const o=S[i].open;
+    return `<div class="card"><h4>${esc(nm(i))}</h4>${o.length?`<ul>${o.map(x=>`<li><span class="${x.state}">${x.state==='no'?'Flag:':'Ask:'}</span> ${esc(x.text)}</li>`).join('')}</ul>`:'<p style="margin:0">Nothing missing. This quote covered every item on the checklist.</p>'}</div>`;
+  }).join('');
+}
+function summaryText(){
+  const S=Q.map(score);
+  return 'Swan Quote Checker summary\n(Prices are before rebates and tax credits.)\n\n'+Q.map((q,i)=>{
+    const eq=[q.brand,q.model].filter(Boolean).join(' ')||'not stated';
+    const open=S[i].open.map(x=>'  - '+x.text).join('\n')||'  - Nothing missing';
+    return `${nm(i)}\nPrice: ${money(q.price)}\nEquipment: ${eq}${q.tons!==''?', '+q.tons+' ton':''}${q.seer!==''?', SEER2 '+q.seer:''}\nScore: ${S[i].pct}/100\nQuestions to ask:\n${open}`;
+  }).join('\n\n');
+}
+
+function renderHow(){
+  $('#how').innerHTML=`<thead><tr><th>Checklist item</th><th>Points</th></tr></thead><tbody>
+  ${CHECKS.map(c=>`<tr><td>${esc(c.q)}</td><td>${c.pts}</td></tr>`).join('')}
+  ${REP.map(c=>`<tr><td>${esc(c.label)}</td><td>${c.pts}</td></tr>`).join('')}
+  </tbody>`;
+}
+function renderAll(full){
+  $('#exnote').hidden=!Q.some(q=>q.example);
+  if(full){renderTabs();renderPanel();}
+  renderCompare();
+}
+$('#clearEx').onclick=()=>{Q=[blank(),blank(),blank()];FILES.fill(null);cur=0;renderAll(true);};
+
+/* Standalone browser reader. No API keys or quote uploads to a server. */
+const scriptLoads=new Map();
+function loadScript(src){
+  if(!scriptLoads.has(src))scriptLoads.set(src,new Promise((resolve,reject)=>{
+    const el=document.createElement('script');el.src=src;el.onload=resolve;el.onerror=()=>{scriptLoads.delete(src);reject({code:'reader'});};document.head.appendChild(el);
+  }));
+  return scriptLoads.get(src);
+}
+async function photoText(image){
+  await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+  const result=await Tesseract.recognize(image,'eng');return result.data.text;
+}
+async function pdfText(file){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  try{
+    if(doc.numPages>8)throw {code:'pages'};
+    let text='';
+    for(let n=1;n<=doc.numPages;n++){
+      const page=await doc.getPage(n),content=await page.getTextContent();
+      let part=content.items.map(i=>i.str+(i.hasEOL?'\n':' ')).join('');
+      if(part.trim().length<20){
+        const canvas=document.createElement('canvas'),view=page.getViewport({scale:1.5});canvas.width=view.width;canvas.height=view.height;
+        await page.render({canvasContext:canvas.getContext('2d'),viewport:view}).promise;
+        part=await photoText(canvas);canvas.width=canvas.height=0;
+      }
+      text+=part+'\n';
+    }
+    return text;
+  }finally{await doc.destroy();}
+}
+function extractQuote(text){
+  const r={},num=re=>{const m=text.match(re);return m?Number(m[1].replace(/,/g,'')):null;};
+  const name=text.match(/(?:contractor|company)(?: name)?\s*[:=]\s*([^\n]{2,100})/i);
+  if(name)r.contractor=name[1].trim();
+  const priceMatches=[...text.matchAll(/(?:grand total|total (?:installed (?:price|cost)|investment|price|cost)|total|investment)\s*[:=]?\s*\$\s*([\d,]+(?:\.\d{2})?)/gi)];
+  const prices=[...new Set(priceMatches.map(m=>Number(m[1].replace(/,/g,''))))];
+  if(prices.length===1)r.price=prices[0];
+  const brands=[...new Set((text.match(/\b(?:Lennox|Amana|Trane|Carrier|Goodman|Rheem|Ruud|York|Daikin|Mitsubishi|Fujitsu|Bosch|Bryant|American Standard)\b/gi)||[]).map(b=>b.toLowerCase()))];
+  if(brands.length===1)r.brand=brands[0].replace(/\b\w/g,c=>c.toUpperCase());
+  const model=text.match(/model(?: number| no\.?)?s?\s*[:=#]\s*([A-Z0-9][A-Z0-9_./ -]{2,65})/i);if(model)r.model=model[1].trim();
+  const uniqueNumber=re=>{const values=[...new Set([...text.matchAll(re)].map(m=>Number(m[1])))];return values.length===1?values[0]:null;};
+  r.tons=uniqueNumber(/\b(\d(?:\.\d+)?)\s*[- ]?tons?\b/gi);
+  r.seer2=uniqueNumber(/\b(\d{2}(?:\.\d+)?)\s*SEER2\b/gi)||num(/\bSEER2\s*[:=]?\s*(\d{2}(?:\.\d+)?)/i);
+  const stages=[];if(/\bsingle[- ]stage\b/i.test(text))stages.push('single');if(/\b(?:two|2)[- ]stage\b/i.test(text))stages.push('two');if(/\bvariable[- ](?:speed|capacity)\b/i.test(text))stages.push('variable');if(stages.length===1)r.stage=stages[0];
+  r.partsYears=num(/(?:parts? warranty)\s*[:=]?\s*(\d+)\s*(?:years?|yrs?)/i)||num(/(\d+)[- ]year\s+parts?\s+warranty/i);
+  r.laborYears=num(/(?:labor warranty)\s*[:=]?\s*(\d+)\s*(?:years?|yrs?)/i)||num(/(\d+)[- ]year\s+labor\s+warranty/i);
+  // Checklist answers require explicit user confirmation after reading the document.
+  return r;
+}
+async function readDocument(file,extraText){
+  let text=extraText||'';
+  if(file){
+    if(file.size>20*1024*1024)throw {code:'size'};
+    if(file.type==='application/pdf'||/\.pdf$/i.test(file.name))text=await pdfText(file);
+    else if(file.type.startsWith('image/'))text=await photoText(file);
+    else throw {code:'type'};
+  }
+  if(!text.trim())throw {code:file?'unreadable':'empty'};
+  return text;
+}
+function errMsg(e){
+  const c=e&&e.code;
+  if(c==='manualLoad')return 'No explicit recommended equipment size was found. Ask your contractor to confirm it; the design load alone does not specify equipment capacity.';
+  if(c==='manualDuct')return 'No labeled total external static pressure was found. Ask your contractor for the measured value and equipment rating.';
+  if(c==='size')return 'Please use a file under 20 MB.';
+  if(c==='pages')return 'Please split this PDF into documents of 8 pages or fewer.';
+  if(c==='reader')return 'The reading tool could not download. Check your internet connection, or paste text / enter details manually.';
+  if(c==='unreadable')return 'No text could be read. Try a clearer photo, paste text, or enter details manually.';
+  if(c==='nosample')return 'Automatic reading is not available on this page right now. You can type the details in under "Something wrong? Fix it here".';
+  if(c==='scan')return 'That PDF is a scan with no readable text. Please upload a photo of it instead.';
+  if(c==='pdf')return 'We could not open that PDF. Try a photo of the quote instead.';
+  if(c==='type')return 'Please upload a PDF or a photo.';
+  if(c==='empty')return 'Upload the quote or paste its text first.';
+  if(c==='rate_limited')return 'Too many requests. Please wait a minute and try again.';
+  return 'We could not read that one. Try a clearer photo, or type the details in under "Something wrong? Fix it here".';
+}
+
+async function readQuote(usePaste){
+  const i=cur,q=Q[i];
+  const file=usePaste?null:FILES[i];
+  const text=(usePaste||!file)?q.paste.trim():'';
+  if(BUSY.has(q))return;
+  BUSY.add(q);
+  setStatus('Reading your quote in this browser…');
+  try{
+    const source=await readDocument(file,text);
+    const r=extractQuote(source);
+    // Replace the quote as one unit, preventing details from an older upload leaking into this result.
+    Object.assign(q,blank(),{paste:source});
+    const set=(k,v)=>{if(v!=null&&v!==''&&!(typeof v==='number'&&isNaN(v)))q[k]=String(v);};
+    set('name',r.contractor);set('price',r.price);set('brand',r.brand);set('model',r.model);set('tons',r.tons);set('seer',r.seer2);
+    if(['single','two','variable'].includes(r.stage))q.stage=r.stage;
+    set('parts',r.partsYears);set('labor',r.laborYears);
+    if(r.permitIncluded===true)q.answers.permit='yes';
+    if(r.financingOffered===true)q.answers.fin='yes';
+
+    if(r.loadCalcMentioned===true)q.answers.load='yes';
+    if(r.ductCheckMentioned===true)q.answers.duct='yes';
+
+    q.example=false;
+    q.status='Text read. Review and correct the fields below, then confirm the checklist yourself. Ambiguous or unrecognized details are left blank.';q.statusType='ok';
+    if(cur===i){renderAll(true);}else{renderAll(false);}
+  }catch(e){
+    if(cur===i)setStatus(errMsg(e),'err');else{q.status=errMsg(e);q.statusType='err';}
+  }finally{BUSY.delete(q);}
+}
+
+async function readDoc(kind,file){
+  const i=cur,q=Q[i];
+  const out=$('#docout-'+kind);
+  if(out)out.innerHTML='<div class="docres">Reading…</div>';
+  try{
+    const text=await readDocument(file,'');
+    const number=re=>{const m=text.match(re);return m?Number(m[1].replace(/,/g,'')):null;};
+    if(kind==='load'){
+      const tons=number(/recommended (?:equipment )?(?:size|capacity|tons?)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:tons?)?/i);
+      if(!(tons>0))throw {code:'manualLoad'};
+      q.docs.load={name:file.name,tons:String(tons)};
+    }else{
+      const pressure=number(/(?:total external static(?: pressure)?|TESP)\s*[:=]?\s*(\d*\.\d+|\d+)\s*(?:in\.?|inches|WC)/i);
+      if(!(pressure>0))throw {code:'manualDuct'};
+      q.docs.duct={name:file.name,static:String(pressure)};
+    }
+    q.example=false;
+    if(cur===i)renderAll(true);else renderAll(false);
+  }catch(e){
+    if(out)out.innerHTML=`<div class="docres flag">${esc(errMsg(e))}</div>`;
+  }
+}
+
+const goto=id=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
+$('#goStart').onclick=()=>goto('start');
+$('#goSample').onclick=()=>{if(!Q.some(q=>q.name||q.price!==''||q.paste||Object.keys(q.answers).length)){Q=EXAMPLES.map(q=>JSON.parse(JSON.stringify(q)));cur=0;renderAll(true);}goto('sample');};
+$('#copyBtn').onclick=async()=>{
+  const t=summaryText(),st=$('#copyStatus'),box=$('#sumBox');
+  try{await navigator.clipboard.writeText(t);st.textContent='Copied.';box.hidden=true;}
+  catch(e){box.value=t;box.hidden=false;st.textContent='Select the text below and copy it.';}
+};
+renderHow();renderAll(true);
+</script>
+</body>
+</html>
